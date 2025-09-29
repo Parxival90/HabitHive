@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | HabitHive</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                        dark: {
+                            900: '#0f172a',
+                            800: '#1e293b',
+                            700: '#334155',
+                            600: '#475569',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-card {
+            backdrop-filter: blur(10px);
+            background-color: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .habit-card {
+            transition: all 0.3s ease;
+        }
+        .habit-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        .streak-badge {
+            background: linear-gradient(45deg, #f59e0b, #f97316);
+        }
+        .sidebar {
+            transition: all 0.3s ease;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body class="bg-dark-900 text-gray-100 min-h-screen flex">
+    <!-- Mobile sidebar toggle -->
+    <button id="sidebar-toggle" class="md:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-dark-800 border border-dark-700">
+        <i data-feather="menu"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <aside class="sidebar fixed md:relative w-64 h-full bg-dark-800 border-r border-dark-700 z-40">
+        <div class="p-4 flex items-center space-x-2 border-b border-dark-700 h-16">
+            <i data-feather="hexagon" class="text-primary-400"></i>
+            <span class="text-xl font-bold bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent">HabitHive</span>
+        </div>
+        <div class="p-4">
+            <div class="flex items-center space-x-3 mb-6">
+                <div class="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center text-white font-medium">JD</div>
+                <div>
+                    <p class="font-medium">John Doe</p>
+                    <p class="text-xs text-gray-400">Free Plan</p>
+                </div>
+            </div>
+            <nav class="space-y-1">
+                <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-lg bg-primary-900 bg-opacity-20 text-primary-400">
+                    <i data-feather="home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-dark-700 transition">
+                    <i data-feather="activity"></i>
+                    <span>Habits</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-dark-700 transition">
+                    <i data-feather="bar-chart-2"></i>
+                    <span>Stats</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-dark-700 transition">
+                    <i data-feather="award"></i>
+                    <span>Achievements</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-dark-700 transition">
+                    <i data-feather="bell"></i>
+                    <span>Reminders</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-dark-700 transition">
+                    <i data-feather="settings"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-dark-700">
+            <button id="theme-toggle" class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-dark-700 transition">
+                <i data-feather="moon" class="hidden dark:block"></i>
+                <i data-feather="sun" class="block dark:hidden"></i>
+                <span id="theme-text">Dark Mode</span>
+            </button>
+            <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-dark-700 transition">
+                <i data-feather="log-out"></i>
+                <span>Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="flex-1 overflow-auto">
+        <div class="max-w-7xl mx-auto p-6">
+            <div class="flex items-center justify-between mb-8">
+                <h1 class="text-2xl font-bold">Dashboard</h1>
+                <div class="flex space-x-3">
+                    <div class="relative">
+                        <input type="text" placeholder="Search..." class="pl-10 pr-4 py-2 bg-dark-800 border border-dark-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition w-64">
+                        <i data-feather="search" class="absolute left-3 top-2.5 text-gray-500"></i>
+                    </div>
+                    <button class="p-2 rounded-lg bg-dark-800 border border-dark-700">
+                        <i data-feather="bell"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="glass-card rounded-xl p-6 border border-dark-700">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-sm text-gray-400 mb-1">Current Streak</p>
+                            <h2 class="text-3xl font-bold">7 <span class="text-lg text-gray-400">days</span></h2>
+                        </div>
+                        <div class="streak-badge px-3 py-1 rounded-full text-xs font-medium flex items-center">
+                            <i data-feather="zap" class="w-3 h-3 mr-1"></i>
+                            Active
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-dark-700">
+                        <p class="text-sm text-gray-400">Longest streak: <span class="text-white font-medium">14 days</span></p>
+                    </div>
+                </div>
+                <div class="glass-card rounded-xl p-6 border border-dark-700">
+                    <p class="text-sm text-gray-400 mb-1">Habits Tracked</p>
+                    <h2 class="text-3xl font-bold">4 <span class="text-lg text-gray-400">habits</span></h2>
+                    <div class="mt-4 pt-4 border-t border-dark-700">
+                        <p class="text-sm text-gray-400">Completed today: <span class="text-white font-medium">2/4</span></p>
+                    </div>
+                </div>
+                <div class="glass-card rounded-xl p-6 border border-dark-700">
+                    <p class="text-sm text-gray-400 mb-1">Achievements</p>
+                    <h2 class="text-3xl font-bold">5 <span class="text-lg text-gray-400">badges</span></h2>
+                    <div class="mt-4 pt-4 border-t border-dark-700">
+                        <p class="text-sm text-gray-400">Last earned: <span class="text-white font-medium">Hydration Hero</span></p>
+                    </div>
+                </div>
+                <div class="glass-card rounded-xl p-6 border border-dark-700">
+                    <p class="text-sm text-gray-400 mb-1">Consistency</p>
+                    <h2 class="text-3xl font-bold">78<span class="text-lg">%</span></h2>
+                    <div class="mt-4 pt-4 border-t border-dark-700">
+                        <p class="text-sm text-gray-400">Weekly average</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Habit progress -->
+            <div class="glass-card rounded-xl p-6 border border-dark-700 mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold">Today's Habits</h2>
+                    <button class="flex items-center space-x-1 text-primary-400 hover:text-primary-300 transition">
+                        <i data-feather="plus" class="w-4 h-4"></i>
+                        <span>Add Habit</span>
+                    </button>
+                </div>
+                <div class="space-y-4">
+                    <div class="habit-card p-4 bg-dark-800 rounded-lg border border-dark-700">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-full bg-blue-900 bg-opacity-20 flex items-center justify-center">
+                                    <i data-feather="droplet" class="text-blue-400"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-medium">Water Intake</h3>
+                                    <p class="text-xs text-gray-400">8 glasses today</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button class="p-2 rounded-full hover:bg-dark-700 transition">
+                                    <i data-feather="plus" class="w-4 h-4"></i>
+                                </button>
+                                <div class="w-24 h-2 bg-dark-700 rounded-full overflow-hidden">
+                                    <div class="h-full bg-blue-400" style="width: 75%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="habit-card p-4 bg-dark-800 rounded-lg border border-dark-700">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-full bg-green-900 bg-opacity-20 flex items-center justify-center">
+                                    <i data-feather="activity" class="text-green-400"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-medium">Morning Run</h3>
+                                    <p class="text-xs text-gray-400">30 minutes</p>
+                                </div>
+                            </div>
+                            <button class="p-2 rounded-full bg-green-900 bg-opacity-20 text-green-400">
+                                <i data-feather="check" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="habit-card p-4 bg-dark-800 rounded-lg border border-dark-700">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-full bg-purple-900 bg-opacity-20 flex items-center justify-center">
+                                    <i data-feather="moon" class="text-purple-400"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-medium">Sleep Early</h3>
+                                    <p class="text-xs text-gray-400">Before 11 PM</p>
+                                </div>
+                            </div>
+                            <button class="p-2 rounded-full hover:bg-dark-700 transition">
+                                <i data-feather="clock" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="habit-card p-4 bg-dark-800 rounded-lg border border-dark-700">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-full bg-yellow-900 bg-opacity-20 flex items-center justify-center">
+                                    <i data-feather="smile" class="text-yellow-400"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-medium">Mood Check</h3>
+                                    <p class="text-xs text-gray-400">How are you today?</p>
+                                </div>
+                            </div>
+                            <button class="p-2 rounded-full hover:bg-dark-700 transition">
+                                <i data-feather="edit" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="glass-card rounded-xl p-6 border border-dark-700">
+                    <h2 class="text-xl font-bold mb-4">Weekly Progress</h2>
+                    <canvas id="weeklyChart" height="300"></canvas>
+                </div>
+                <div class="glass-card rounded-xl p-6 border border-dark-700">
+                    <h2 class="text-xl font-bold mb-4">Habit Distribution</h2>
+                    <canvas id="habitChart" height="300"></canvas>
+                </div>
+            </div>
+
+            <!-- Recent achievements -->
+            <div class="glass-card rounded-xl p-6 border border-dark-700">
+                <h2 class="text-xl font-bold mb-6">Recent Achievements</h2>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <div class="bg-dark-800 rounded-lg p-4 text-center border border-dark-700">
+                        <div class="w-16 h-16 mx-auto rounded-full bg-yellow-900 bg-opacity-20 flex items-center justify-center mb-3">
+                            <i data-feather="award" class="text-yellow-400"></i>
+                        </div>
+                        <h3 class="font-medium mb-1">7-Day Streak</h3>
+                        <p class="text-xs text-gray-400">Earned 2 days ago</p>
+                    </div>
+                    <div class="bg-dark-800 rounded-lg p-4 text-center border border-dark-700">
+                        <div class="w-16 h-16 mx-auto rounded-full bg-blue-900 bg-opacity-20 flex items-center justify-center mb-3">
+                            <i data-feather="droplet" class="text-blue-400"></i>
+                        </div>
+                        <h3 class="font-medium mb-1">Hydration Hero</h3>
+                        <p class="text-xs text-gray-400">Earned 5 days ago</p>
+                    </div>
+                    <div class="bg-dark-800 rounded-lg p-4 text-center border border-dark-700">
+                        <div class="w-16 h-16 mx-auto rounded-full bg-green-900 bg-opacity-20 flex items-center justify-center mb-3">
+                            <i data-feather="activity" class="text-green-400"></i>
+                        </div>
+                        <h3 class="font-medium mb-1">Fitness Fanatic</h3>
+                        <p class="text-xs text-gray-400">Earned 1 week ago</p>
+                    </div>
+                    <div class="bg-dark-800 rounded-lg p-4 text-center border border-dark-700">
+                        <div class="w-16 h-16 mx-auto rounded-full bg-purple-900 bg-opacity-20 flex items-center justify-center mb-3">
+                            <i data-feather="moon" class="text-purple-400"></i>
+                        </div>
+                        <h3 class="font-medium mb-1">Early Riser</h3>
+                        <p class="text-xs text-gray-400">Earned 2 weeks ago</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Sidebar toggle for mobile
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const sidebar = document.querySelector('.sidebar');
+        
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+        });
+
+        // Theme toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeText = document.getElementById('theme-text');
+        const html = document.querySelector('html');
+        
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            const isDark = html.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            themeText.textContent = isDark ? 'Dark Mode' : 'Light Mode';
+        });
+
+        // Set initial theme based on user preference
+        if (localStorage.getItem('theme') === 'light' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: light)').matches)) {
+            html.classList.remove('dark');
+            themeText.textContent = 'Light Mode';
+        }
+
+        // Initialize charts
+        document.addEventListener('DOMContentLoaded', function() {
+            // Weekly progress chart
+            const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
+            const weeklyChart = new Chart(weeklyCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [
+                        {
+                            label: 'Completion Rate',
+                            data: [65, 75, 80, 70, 85, 60, 90],
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.05)'
+                            },
+                            ticks: {
+                                color: '#94a3b8'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.05)'
+                            },
+                            ticks: {
+                                color: '#94a3b8'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Habit distribution chart
+            const habitCtx = document.getElementById('habitChart').getContext('2d');
+            const habitChart = new Chart(habitCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Water', 'Exercise', 'Sleep', 'Mood'],
+                    datasets: [{
+                        data: [35, 25, 20, 20],
+                        backgroundColor: [
+                            '#3b82f6',
+                            '#10b981',
+                            '#8b5cf6',
+                            '#f59e0b'
+                        ],
+                        borderColor: '#0f172a',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                color: '#e2e8f0'
+                            }
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+        });
+
+        // Feather icons
+        feather.replace();
+    </script>
+</body>
+</html>
